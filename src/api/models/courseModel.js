@@ -11,19 +11,30 @@ const courseSchema = new mongoose.Schema({
   courseDescription: String,
   whatWillStudentLearn: String,
   requirements: String,
-  level: String, 
+  level: String,
   audioLanguage: String,
   closeCaption: Boolean,
   category: String,
-  curriculum: [curriculumItemSchema],
-  courseThumbnail: String, 
-  videoThumbnail: { 
-    thumbnailUrl: String, 
-    videoUrl: String 
+  price: {
+    type: Number,
+    min: 0, 
+    validate: {
+      validator: function (value) {
+        return !isNaN(value);
+      },
+      message: props => `${props.value} is not a valid price!`
+    }
   },
-  teacher: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User' 
+  curriculum: [{
+    title: String,
+    items: [curriculumItemSchema]
+  }],
+  courseThumbnail: String,
+  thumbnailUrl: String,
+  videoUrl: String,
+  teacher: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 });
 

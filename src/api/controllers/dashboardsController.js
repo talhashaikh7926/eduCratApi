@@ -4,33 +4,78 @@ const Sale = require('../models/saleModel');
 const Enrollment = require('../models/enrollmentModel');
 
 exports.getTeacherDashboard = async (req, res) => {
-    const teacherId = req.user.id;
+    const { teacherId } = req.body;
 
     try {
-
+        // Retrieve recent courses regardless of the teacher
+        const recentCourses = await Course.find().sort({ createdAt: -1 }).limit(5);
+    
+        // Retrieve 5 popular teachers
+        const popularTeachers = await User.find({ role: 'teacher' }).limit(5);
+    
+        // Retrieve the teacher's profile
         const teacherProfile = await User.findById(teacherId);
+    
+        // Retrieve all courses taught by the teacher
         const courses = await Course.find({ teacher: teacherId });
+    
+        // Calculate total sales for the courses
         const sales = await Sale.aggregate([
             { $match: { course: { $in: courses.map(course => course._id) } } },
             { $group: { _id: null, totalSales: { $sum: '$amount' } } }
         ]);
-
-
+    
+        // Calculate total students for the courses
         const totalStudents = await Enrollment.distinct('student', { course: { $in: courses.map(course => course._id) } }).count();
-
+    
         res.json({
-            name: teacherProfile.name,
-            profilePicture: teacherProfile.profilePicture,
+            name: teacherProfile.firstName +" "+teacherProfile.lastName,
+            email:teacherProfile.email,
+            profilePicture: teacherProfile.profilePicture ? `${req.protocol}://${req.get('host')}/Images/${teacherProfile.profilePicture}` : null,
             profileViews: teacherProfile.profileViews,
             totalCourses: courses.length,
             totalSales: sales.length > 0 ? sales[0].totalSales : 0,
             totalStudents,
-            courses: courses,
+            recentCourses: recentCourses.map(course => ({
+                _id: course._id,
+                title: course.title,
+                shortDescription: course.shortDescription,
+                courseDescription: course.courseDescription,
+                whatWillStudentLearn: course.whatWillStudentLearn,
+                requirements: course.requirements,
+                level: course.level,
+                audioLanguage: course.audioLanguage,
+                closeCaption: course.closeCaption,
+                category: course.category,
+                curriculum: course.curriculum,
+                price: course.price,
+                courseThumbnailUrl: course.courseThumbnail ? `${req.protocol}://${req.get('host')}/Images/${course.courseThumbnail}` : null,
+                videoThumbnailUrl: course.videoThumbnail ? (course.videoThumbnail.thumbnailUrl ? `${req.protocol}://${req.get('host')}/Images/${course.videoThumbnail.thumbnailUrl}` : null) : null
+            })),
+            popularTeachers: await Promise.all(popularTeachers.map(async (teacher) => {
+                // Find courses taught by the current teacher
+                const teacherCourses = await Course.find({ teacher: teacher._id });
+    
+                // Calculate total enrolled students for the teacher's courses
+                const totalEnrolledStudents = await Enrollment.distinct('student', { course: { $in: teacherCourses.map(course => course._id) } }).count();
+    
+                return {
+                    _id: teacher._id,
+                    firstName: teacher.firstName,
+                    lastName: teacher.lastName,
+                    personalInfo: teacher.personalInfo,
+                    profilePictureUrl: teacher.profilePicture ? `${req.protocol}://${req.get('host')}/Images/${teacher.profilePicture}` : null,
+                    totalCourses: teacherCourses.length,
+                    totalEnrolledStudents,
+                };
+            }))
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error fetching teacher dashboard data', error: error.message });
+        res.status(500).json({ message: 'Error fetching teacher data', error: error.message });
     }
+    
+
 };
 
 exports.getAdminDashboard = async (req, res) => {

@@ -3,9 +3,9 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 
 exports.updateProfile = async (req, res, next) => {
-    const { userId, firstName, lastName, address1, address2, phone, birthday, state, country, personalInfo } = req.body;
+    const {firstName, lastName, address1, address2, phone, birthday, state, country, personalInfo } = req.body;
     let profilePicturePath = '';
-
+    const userId = req.user.id
     if (req.file) {
         profilePicturePath = req.file.filename;
         const profile = await User.findById(userId);
@@ -14,6 +14,7 @@ exports.updateProfile = async (req, res, next) => {
         }
         if (userId) {
             try {
+               
                 const updatedUser = await User.findByIdAndUpdate(userId, {
                     firstName,
                     lastName,
@@ -36,18 +37,20 @@ exports.updateProfile = async (req, res, next) => {
             res.status(500).json({ message: 'User Id Required' });
         }
     }
+    else
+        res.status(500).json({ message: 'Error Uploading File / Missing' });
 }
 exports.getProfile = async (req, res) => {
-    const { userId } = req.body;
-    if (userId) {
+    const {profileId} = req.body;
+    if (profileId) {
         try {
-            const profile = await User.findById(userId);
+            const profile = await User.findById(profileId);
             if (!profile) {
                 return res.status(404).json({ message: 'User not found' });
             }
             let profilePictureFilename = profile.profilePicture ? path.basename(profile.profilePicture) : null;
             const profilePictureUrl = profilePictureFilename
-                ? `${req.protocol}://${req.get('host')}/uploads/${profilePictureFilename}`
+                ? `${req.protocol}://${req.get('host')}/Images/${profilePictureFilename}`
                 : null;
 
             const profileData = {
@@ -87,12 +90,12 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.updateSocialProfile = async (req, res, next) => {
-    const {twitter, instagram, facebook, linkedin } = req.body.socialLinks;
-    const profile = await User.findById(req.body.userId);
+    const {twitter, instagram, facebook, linkedin } = req.body;
+    const profile = await User.findById(req.user.id);
     if (!profile) {
         return res.status(404).json({ message: 'User not found' });
     }
-    console.log(twitter,'asda');
+
     if (profile) {
         try {
             const updatedUser = await User.findByIdAndUpdate(profile, {

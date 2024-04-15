@@ -5,8 +5,8 @@ const User = require('../models/userModel');
 exports.signUp = async (req, res, next) => {
     try {
         const { email, username, password, role } = req.body;
-        console.log(req.email, 'sdad');
-        const newUser = await User.create({ email, username, password, role });
+       
+        const newUser = await User.create({ email, username, password, role:"teacher" });
 
         // Generate a token
         const token = jwt.sign({ id: newUser._id, role: newUser.role }, process.env.JWT_SECRET, {
@@ -34,11 +34,12 @@ exports.signUp = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { usernameOrEmail, password } = req.body;
+
         const user = await User.findOne({ 
             $or: [
-                {email: email},
-                {username: email}
+                {email: usernameOrEmail},
+                {username: usernameOrEmail}
             ]
 
         });
@@ -54,6 +55,8 @@ exports.login = async (req, res, next) => {
         res.status(200).json({
             status: 'success',
             token,
+            id: user._id,
+            role: user.role 
         });
     } catch (error) {
         next(error);

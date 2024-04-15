@@ -4,7 +4,7 @@ const { updateProfile, getProfile, changePassword, updateSocialProfile } = requi
 const { jwtMiddleware } = require('../middlewares/authMiddleware');
 const { upload } = require('../helpers/multerConfig');
 const { createCourse, getAllCourses, getCoursesById } = require('../controllers/courseController');
-const { enrollInCourse,getEnrolledCourses } = require('../controllers/enrollmentController');
+const { enrollInCourses,getEnrolledCourses } = require('../controllers/enrollmentController');
 const { getReviewsForCourse, respondToReview, submitReview } = require('../controllers/reviewController');
 const { bookmarkCourse, removeBookmark, getBookmarkedCourses } = require('../controllers/bookmarkController');
 const { createTopic, toggleSubscribeTopic, deleteTopic } = require('../controllers/forumController');
@@ -17,8 +17,8 @@ router.post('/login', login);
 
 
 /////////////Update Profile//////////////
-router.post('/updateProfile', jwtMiddleware, upload.single('profilePicture'), updateProfile)
-router.get('/getProfile', jwtMiddleware, getProfile)
+router.post('/updateProfile', jwtMiddleware, upload.single('file'), updateProfile)
+router.post('/getProfile', jwtMiddleware, getProfile)
 router.post('/changePassword', jwtMiddleware, changePassword)
 router.post('/updateSocialProfile', jwtMiddleware, updateSocialProfile)
 
@@ -28,12 +28,12 @@ router.post('/updateSocialProfile', jwtMiddleware, updateSocialProfile)
 ////////Course///////////////////////
 router.post('/createCourse', jwtMiddleware, upload.fields([
     { name: 'courseThumbnail', maxCount: 1 },
-    { name: 'videoThumbnail', maxCount: 1 }
-]), createCourse);
+    { name: 'thumbnailUrl', maxCount: 1 }
+  ]), createCourse);
 router.get('/courses', getAllCourses)
-router.get('/coursesbyId/:courseId', jwtMiddleware, getCoursesById)
-router.post('/enroll/:courseId', jwtMiddleware, enrollInCourse)
-router.get('/enroll' ,jwtMiddleware,getEnrolledCourses)
+router.post('/coursesbyId', jwtMiddleware, getCoursesById)
+router.post('/enrollCourse', jwtMiddleware, enrollInCourses)
+router.post('/enroll' ,jwtMiddleware,getEnrolledCourses)
 
 ////////////Reviews ///////////////////
 router.post('/courses/:courseId/reviews', jwtMiddleware, submitReview);
@@ -54,7 +54,7 @@ router.delete('/forum/topics/:topicId', jwtMiddleware, deleteTopic);
 
 
 /////////Dashboard ///////////
-router.get('/dashboard/teacher', jwtMiddleware, getTeacherDashboard);
+router.post('/dashboard/teacher', jwtMiddleware, getTeacherDashboard);
 router.get('/dashboard/admin', jwtMiddleware,getAdminDashboard)
 
 module.exports = router;

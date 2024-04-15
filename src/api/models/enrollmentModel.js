@@ -19,14 +19,48 @@ const enrollmentSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  
   progress: {
     type: Number,
-    default: 0, 
+    default: 0,
     min: 0,
     max: 100
   },
-  
+  firstName: {
+    type: String,
+    required: true
+  },
+  lastName: {
+    type: String,
+    required: true
+  },
+  company: String,
+  country: String,
+  address: {
+    type: String,
+    required: true
+  },
+  apartment: String,
+  city: {
+    type: String,
+    required: true
+  },
+  state: {
+    type: String,
+    required: true
+  },
+  zip: {
+    type: String,
+    required: true
+  },
+  phone: {
+    type: String,
+    required: true
+  },
+  email: {
+    type: String,
+    required: true
+  },
+  notes: String
 }, { timestamps: true });
 
 const Enrollment = mongoose.model('Enrollment', enrollmentSchema);

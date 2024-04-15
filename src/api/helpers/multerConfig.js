@@ -1,14 +1,25 @@
 const multer = require('multer');
-const path = require('path')
+const path = require('path');
+const fs = require('fs');
+
+const destinationDirectory = 'public/Images';
+
+if (!fs.existsSync(destinationDirectory)) {
+    fs.mkdirSync(destinationDirectory, { recursive: true }, (error) => {
+        if (error) {
+            console.error('Error creating directory:', error);
+        } else {
+            console.log('Directory created successfully');
+        }
+    });
+}
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '..', 'uploads');
-        cb(null, uploadPath)
+        cb(null, destinationDirectory);
     },
     filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-
+        cb(null, file.originalname + "_" + Date.now() + path.extname(file.originalname));
     }
 });
 
@@ -21,10 +32,9 @@ const fileFilter = (req, file, cb) => {
 };
 
 exports.upload = multer({
-
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 1024 * 1024 * 5
+        fileSize: 1024 * 1024 * 5 
     }
-})
+});

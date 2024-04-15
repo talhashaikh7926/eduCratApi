@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
         ref: 'Course'
       }],
     firstName: {type: String},
-    lastname: {type: String},
+    lastName: {type: String},
     phone: {type: String},
     personalInfo: {type: String},
     profilePicture: {type: String},

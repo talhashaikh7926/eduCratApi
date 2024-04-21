@@ -3,9 +3,9 @@ const { signUp, login } = require('../controllers/authController');
 const { updateProfile, getProfile, changePassword, updateSocialProfile } = require('../controllers/updateProfileController');
 const { jwtMiddleware } = require('../middlewares/authMiddleware');
 const { upload } = require('../helpers/multerConfig');
-const { createCourse, getAllCourses, getCoursesById } = require('../controllers/courseController');
+const { createCourse, getAllCourses, getCoursesById, UpdateProgress } = require('../controllers/courseController');
 const { enrollInCourses,getEnrolledCourses } = require('../controllers/enrollmentController');
-const { getReviewsForCourse, respondToReview, submitReview } = require('../controllers/reviewController');
+const { getReviewsForCourse, respondToReview, submitReview, getTeacherCourseReviews, getAllTeachersData } = require('../controllers/reviewController');
 const { bookmarkCourse, removeBookmark, getBookmarkedCourses } = require('../controllers/bookmarkController');
 const { createTopic, toggleSubscribeTopic, deleteTopic } = require('../controllers/forumController');
 const { getTeacherDashboard,getAdminDashboard } = require('../controllers/dashboardsController');
@@ -36,15 +36,17 @@ router.post('/enrollCourse', jwtMiddleware, enrollInCourses)
 router.post('/enroll' ,jwtMiddleware,getEnrolledCourses)
 
 ////////////Reviews ///////////////////
-router.post('/courses/:courseId/reviews', jwtMiddleware, submitReview);
-router.post('/reviews/:reviewId/respond', jwtMiddleware, respondToReview);
-router.get('/courses/:courseId/reviews', getReviewsForCourse);
-
+router.post('/courses/add/reviews', jwtMiddleware, submitReview);
+router.post('/reviews/respond', jwtMiddleware, respondToReview);
+router.post('/courses/all/reviews', jwtMiddleware,getReviewsForCourse);
+router.post('/courses/teacher/reviews', jwtMiddleware,getTeacherCourseReviews)
+router.post('/teacher/record',jwtMiddleware,getAllTeachersData)
 
 /////////Bookmark Course ////////////////////////
 router.post('/courses/:courseId/bookmark', jwtMiddleware, bookmarkCourse);
 router.delete('/courses/:courseId/bookmark', jwtMiddleware, removeBookmark);
 router.get('/my/bookmarks', jwtMiddleware, getBookmarkedCourses);
+router.post('/course/progress', jwtMiddleware,UpdateProgress)
 
 
 /////////Forum Topic ////////////////
@@ -55,6 +57,6 @@ router.delete('/forum/topics/:topicId', jwtMiddleware, deleteTopic);
 
 /////////Dashboard ///////////
 router.post('/dashboard/teacher', jwtMiddleware, getTeacherDashboard);
-router.get('/dashboard/admin', jwtMiddleware,getAdminDashboard)
+router.post('/dashboard/admin', jwtMiddleware,getAdminDashboard)
 
 module.exports = router;

@@ -89,6 +89,7 @@ exports.getEnrolledCourses = async (req, res) => {
         const enrolledCourses = [];
         for (const enrollment of enrollments) {
             const courseId = enrollment.course._id;
+            const progress = enrollment.progress;
             const course = await Course.aggregate([
                 {
                     $match: { _id: courseId }
@@ -103,6 +104,11 @@ exports.getEnrolledCourses = async (req, res) => {
                 },
                 {
                     $unwind: '$teacherInfo'
+                },
+                {
+                    $addFields: {
+                        enrollProgress: progress // Add the enrollment progress field
+                    }
                 },
                 {
                     $project: {
@@ -143,15 +149,17 @@ exports.getEnrolledCourses = async (req, res) => {
                                     else: null
                                 }
                             }
-                        }
+                        },
+                        enrollProgress: 1
                     }
                 }
+                
             ]);
             if (!course || course.length === 0) {
                 console.error(`Course with ID ${courseId} not found`);
                 continue; // Skip to the next enrollment
             }
-            enrolledCourses.push(course[0]); // Assuming only one course is returned
+            enrolledCourses.push(course[0]); 
         }
 
         res.status(200).json(enrolledCourses);

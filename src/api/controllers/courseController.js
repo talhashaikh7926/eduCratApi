@@ -2,6 +2,7 @@ const express = require('express');
 const Course = require('../models/courseModel');
 const User = require('../models/userModel');
 const mongoose = require('mongoose');
+const Enrollment = require('../models/enrollmentModel');
 const router = express.Router();
 const path = require('path');
 
@@ -60,6 +61,14 @@ exports.getAllCourses = async (req, res) => {
                 $unwind: '$teacherInfo'
             },
             {
+                $lookup: {
+                    from: 'reviews',
+                    localField: '_id',
+                    foreignField: 'course',
+                    as: 'reviews'
+                }
+            },
+            {
                 $project: {
                     _id: 1,
                     title: 1,
@@ -89,7 +98,6 @@ exports.getAllCourses = async (req, res) => {
                     },
                     teacher: {
                         _id: '$teacherInfo._id',
-
                         firstName: '$teacherInfo.firstName',
                         lastName: '$teacherInfo.lastName',
                         profilePictureUrl: {
@@ -99,7 +107,8 @@ exports.getAllCourses = async (req, res) => {
                                 else: null
                             }
                         }
-                    }
+                    },
+                    reviews: 1 // Include the reviews object in the output
                 }
             }
         ]);
@@ -108,8 +117,8 @@ exports.getAllCourses = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Error fetching courses', error: error.message });
     }
-
 };
+
 
 exports.getCoursesById = async (req, res) => {
     const { courseId } = req.body;
@@ -199,7 +208,8 @@ exports.getCoursesById = async (req, res) => {
                     },
                     enrollmentLength: 1,
                     teacherTotalCourses: 1,
-                    reviewsLength: 1
+                    reviewsLength: 1,
+                    reviews: 1
                 }
             }
         ]);
@@ -215,3 +225,46 @@ exports.getCoursesById = async (req, res) => {
     }
 
 };
+
+
+exports.UpdateProgress = async (req, res) => {
+    const { curriculumId, courseId, userId } = req.body;
+    try {
+      
+      const course = await Course.findById(courseId);
+      if (!course) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
+  
+     
+      
+      const totalCurriculums = course?.curriculum.length;
+      const progressIncrement = 100 / totalCurriculums;
+  
+      let enrollment = await Enrollment.findOne({ course: courseId, student: userId });
+      if (!enrollment) {
+        return res.status(404).json({ message: 'Enrollment not found' });
+      }
+  
+      enrollment.progress += progressIncrement;
+   
+      if(enrollment.progress > 100) {
+        return res.status(404).json({ message: 'Finished' });
+       
+      }
+
+      const updatedEnrollment = await Enrollment.findOneAndUpdate(
+        { course: courseId, student: userId },
+        { $inc: { progress: enrollment.progress } }, // Increment progress
+        { new: true } // Return the updated document
+      );
+  
+      res.status(200).json({ message: 'Enrollment progress updated successfully', updatedEnrollment });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error updating enrollment progress', error: error.message });
+    }
+
+};
+
+
